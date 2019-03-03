@@ -26,6 +26,10 @@ def main(_):
     parser.add_argument("searchhash", type=str, help="hash that should be checked")
     a = vars(parser.parse_args())
 
+    if not os.path.isfile(a["hashdatabase"]):
+        print(f"password database does not exists: {a['hashdatabase']}")
+        return -1
+
     print(f"open password database: {a['hashdatabase']}")
     print(f"check hash: {a['searchhash']}")
     with open(a["hashdatabase"], "r+") as hfp:
