@@ -3,6 +3,7 @@ import sys
 import argparse
 import mmap
 
+
 def find_hash_nearby(hfmap, position):
     k = position
     while hfmap[k] != ord("\r") and k < len(hfmap):
@@ -15,6 +16,26 @@ def find_hash_nearby(hfmap, position):
         return "", 0
     hashstr, hashcount = hashline.split(":")
     return hashstr, int(hashcount)
+
+
+def search(databasefile, hash_to_search):
+    with open(databasefile, "r+") as hfp:
+        hfmap = mmap.mmap(hfp.fileno(), 0)
+        left = 0
+        right = len(hfmap) - 1
+        c = 0
+        while right - left > 40:
+            mid = left + (right - left) // 2 + 1
+            hstr, hctn = find_hash_nearby(hfmap, mid)
+            if hstr == hash_to_search:
+                return hstr, hctn, c
+                break
+            if hstr < hash_to_search:
+                left = mid
+            else:
+                right = mid
+            c += 1
+        hfmap.close()
 
 
 def main(_):
@@ -32,24 +53,10 @@ def main(_):
 
     print(f"open password database: {a['hashdatabase']}")
     print(f"check hash: {a['searchhash']}")
-    with open(a["hashdatabase"], "r+") as hfp:
-        hfmap = mmap.mmap(hfp.fileno(), 0)
-        left = 0
-        right = len(hfmap) - 1
-        c = 0
-        while right - left > 40:
-            mid = left + (right - left) // 2 + 1
-            hstr, hctn = find_hash_nearby(hfmap, mid)
-            if hstr == a["searchhash"]:
-                print(f"found hash with {c} checks")
-                print(hstr, hctn)
-                break
-            if hstr < a["searchhash"]:
-                left = mid
-            else:
-                right = mid
-            c += 1
-        hfmap.close()
+    hstr, hctn, steps = search(a["hashdatabase"], a["searchhash"])
+    print(f"found hash with {steps} checks")
+    print(hstr, hctn)
+
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
